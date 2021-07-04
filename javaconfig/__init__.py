@@ -1,0 +1,1 @@
+from .javaconfig import JavaConfigurations

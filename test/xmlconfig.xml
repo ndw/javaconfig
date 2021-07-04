@@ -1,0 +1,68 @@
+<?xml version='1.0' encoding='utf-8'?> <!-- -*- nxml -*- -->
+<config>
+  <maven-config mvn="/usr/local/bin/mvn"
+                dependency-plugin="org.apache.maven.plugins:maven-dependency-plugin:2.1:get">
+    <repo>https://repo1.maven.org/maven2</repo>
+    <repo>https://oss.sonatype.org/content/repositories/snapshots</repo>
+  </maven-config>
+
+  <java xml:id="java" exec="/usr/bin/java">
+    <java-option name="XX:+HeapDumpOnOutOfMemoryError"/>
+    <system-property name="some-property" value="some-value"/>
+    <envar name="SOME_VAR" value="some value"/>
+<!--
+    <system-property name="java.util.logging.config.file"
+		     value="/Users/ndw/java/logging.properties"/>
+    <system-property name="http.proxyHost" value="localhost"/>
+    <system-property name="http.proxyPort" value="8123"/>
+    <classpath path="/Users/ndw/java"/>
+    <classpath path="/Users/ndw/java/XfoJavaCtl.jar"/>
+-->
+  </java>
+
+  <java xml:id="bigmem" extends="java">
+    <java-option name="Xmx1024m"/>
+  </java>
+
+  <trang xml:id="trang" extends="java"
+         class="com.thaiopensource.relaxng.translate.Driver">
+    <maven artifact="org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT"/>
+    <maven artifact="org.relaxng:trang:20181222"/>
+    <maven artifact="org.docbook:docbook-xslTNG:1.5.2"/>
+    <maven artifact="org.docbook:schemas-docbook:5.2b10a4"/>
+  </trang>
+
+  <saxon xml:id="saxon" extends="bigmem">
+    <maven artifact="org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT"/>
+    <maven artifact="org.docbook:docbook-xslTNG:1.5.2"/>
+  </saxon>
+
+  <saxon xml:id="saxon-9" extends="saxon" class="net.sf.saxon.Transform" argsep=":">
+    <arg name="x" value="org.xmlresolver.tools.ResolvingXMLReader"/>
+    <arg name="y" value="org.xmlresolver.tools.ResolvingXMLReader"/>
+    <arg name="r" value="org.xmlresolver.Resolver"/>
+    
+    <classpath path="java/*.jar"/>
+    <classpath path="java/subdir/"/>
+    <classpath path="java/not-a-subdir/"/>
+  </saxon>
+
+  <saxon xml:id="saxon-9he" extends="saxon-9" class="net.sf.saxon.Transform">
+    <classpath path="/java/saxonhe-9.9.1.5j/saxon9he.jar"/>
+    <arg name="init" value="docbook.Initializer"/>
+    <param name="use.extensions" value="1"/>
+    <param name="chunker.output.quiet" value="1"/>
+  </saxon>
+
+  <saxon xml:id="saxon-10ee" extends="saxon-9" class="com.saxonica.Transform">
+    <maven artifact="com.saxonica:Saxon-EE:10.5"/>
+    <maven artifact="org.apache.logging.log4j:log4j-api:2.1"/>
+    <maven artifact="org.apache.logging.log4j:log4j-core:2.1"/>
+    <maven artifact="org.apache.logging.log4j:log4j-slf4j-impl:2.1"/>
+    <maven artifact="org.slf4j:jcl-over-slf4j:1.7.10"/>
+    <maven artifact="org.slf4j:slf4j-api:1.7.10"/>
+    <maven artifact="org.apache.httpcomponents:httpclient:4.5.2"/>
+    <maven artifact="org.apache.httpcomponents:httpcore:4.4.5"/>
+    <maven artifact="org.apache.httpcomponents:httpmime:4.5.8"/>
+  </saxon>
+</config>
