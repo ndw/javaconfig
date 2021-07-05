@@ -165,7 +165,7 @@ of additional artifacts on the classpath.
 
 ## Running applications
 
-Once you’ve got `javaconfig` installed and a configuration file setup.
+Once you’ve got `javaconfig` installed and a configuration file setup
 (I use `$HOME/.xmlc` by default), you can write a simple shell script
 to run the program.
 
