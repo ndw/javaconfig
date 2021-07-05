@@ -29,9 +29,17 @@ the dependencies for me. Perl has become unreliable (for me) recently,
 so a few weekends ago, I rewrote the script in Python and that’s
 what’s checked into this repository.
 
-In lieu of proper documentation, here’s how it works.
+In brief: the `JavaConfigurations` library works out what complicated
+Java command line is required (classpath, properties, classname, etc.)
+by reading an XML configuration file and runs it for you.
 
-## Configuration
+## Configuration example
+
+The `JavaConfigurations` library begins by reading a configuration
+file. The configuration file is an XML document satisfying the
+`javaconfig.rnc` grammar. Its described in some detail in
+[Configuration summary](#Configuration-summary) below, but we begin
+with an illustrative example.
 
 You create a configuration file in XML that looks like this:
 
@@ -231,3 +239,127 @@ more than one file, so I have the script print a bunch of dashes and
 the name of the source file. But I have a special `--noshowline`
 option to disable that.
 
+## Configuration summary
+
+The `javaconfig.rnc` schema describes the grammar for configuration
+files.
+
+A configuration file is a `config` document that contains a
+`maven-config` element and a collection of configurations. It’s a
+slightly odd schema in that the configuration element names are
+irrelevant and unconstrained. This format grew organically over a
+period of many years. I would guess, though I can no longer recall,
+that the element names were originally unique and served the same role
+as IDs do in the current schema. But I could be wrong.
+
+## Maven configuration
+
+The `maven-config` element has an `mvn` attribute that points to the
+local Maven executable and a `dependency-plugin` that identifies the
+Maven plugin to use for downloading dependencies from Maven
+repositories. You have to have [Maven](https://maven.apache.org/)
+installed to use this library.
+
+A list of Maven repositories appear in `repo` elements inside the
+`maven-config`. The library will search these repositories in the
+specified order to find Java dependencies for applications.
+
+## Application configuration
+
+The remaining elements inside `config` describe the configuration of
+applications. There’s a slant towards command line interfaces like
+those used by 
+[XML Calabash][https://xmlcalabash.com/] and [Saxon][https://www.saxonica.com/].
+Which won’t surprise you if you’re familiar with my other projects.
+
+The names of the elements are irrelevant, except that the name
+`maven-config` is reserved for the Maven configuration described in
+the preceding section. Each configuration must have an `xml:id`
+attribute and may have any of the following attributes:
+
+* `exec` identifies the executable to run for this application. This
+  usually points to the local installation of Java that you want to
+  use for this application.
+* `class` identifies the main Java class to run for this application.
+* `extends` identifies another configuration (by IDREF)
+* `argsep` lets you specify the character that should be used to
+  separate program arguments from their values.
+  
+If one configuration extends another, you can think of the
+configuration as having all of the properties of the configuration it
+extends, with the *extending* configuration overriding any settings on
+the *extended* configuration.
+
+The rules for overriding are that simple atomic values (`class`,
+`exec`, etc.) replace the previous value and list values (`classpath`,
+`system-property`, etc.) are concatenated.
+
+The children of the configuration element describe its environment:
+
+* `maven` is a (possibly nested) list of Maven artifacts that must be on
+  the classpath. `JavaConfigurations` will assure that they’re downloaded, and that
+  any artifacts they depend on are downloaded, and that they’re all put on the
+  classpath.
+* `classpath` is a list of filesystem globs. These will be added to the classpath
+  if they exist. (This is how you can add local jar files and classes to the classpath.)
+* `java-option` is a list of Java options (these are added to the command line immediately
+  after the executable).
+* `system-property` is a list of system properties. (Each name/value pair will be added
+  to the command line as a `-Dname=value` option after the executable.)
+* `envar` is a list of environment variables to be set before running the application.
+* `arg` is a list of application arguments. (Each name/value pair will be added to
+  the command line as `-name value` where the character between the name and value
+  is determined by the `argsep` attribute. These are added *after* the `class`.)
+* `param` is a list of application parameters. These probably only
+  apply to programs like Saxon and XML Calabash. They’re added as
+  `name=value` pairs to the end of the command line.
+  
+## Running an application
+
+The simplest script for running an application looks like this:
+
+```python
+config = JavaConfigurations().config("someID")
+config.parse()
+config.run()
+```
+
+That script finds the configuration with the `xml:id` value `someID`.
+That establishes the initial environment. Calling `parse()` parses the
+`sys.argv` arguments and adds them to the command line.
+
+The following special rules apply when parsing the arguments:
+
+* If an argument begins with `-D`, it’s assumed to be defining a
+  system property.
+* If the argument is `--debug`, then debugging is enabled
+* If the argument is `--verbose`, then the library becomes a little
+  more chatty.
+* If the argument is `--nogo`, then the `run()` method will do
+  everything up to running the command, then return without running it.  
+* Otherwise, if an argument begins with `--`, it’s assumed to be a “user option”.
+* If an argument begins with `-`, it’s assumed to be an “arg”.
+* If an argument contains an `=`, it’s assumed to be a “param”.
+* Otherwise, it’s just stuck on the end of the command line.
+
+After parsing, but before running the command, the configuration can
+be modified. The `config` object exposes an API through public
+properties. (It’s not the cleanest possible API, but it gets the job
+done.)
+
+* `verbose` is a boolean that determines whether or not to be chatty.
+* `debug` is a boolean that determines whether or not to run in debug mode.
+* `nogo` is a boolean that determines whether or not to actually run the application.
+* `java_options` is a list of Java options.
+* `system-properties` is a dictionary of system property name/value pairs.
+* `envar` is a dictionary of environment variable name/value pairs.
+* `options` is a dictionary of option name/value pairs.
+* `parameters` is a dictonary of parameter name/value pairs.
+* `user_options` is a list of user options, these are other arguments passed to the
+  script preceded by `--`. This is a sort of crude mechanism for separating arguments
+  intended for the script from arguments intended for the application.
+* `arguments` is a list of everything else that will be passed to the application.  
+
+Calling `run()` runs the command. Or does everything except run it if
+`nogo` is true. If `debug` is true, this will print out the
+environment as parsed and the command line that (would) run.

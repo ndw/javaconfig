@@ -1,0 +1,67 @@
+start = config
+
+config = element config {
+             (mavenConfig | configuration)*
+         }
+
+mavenConfig = element maven-config {
+                  attribute mvn { text }?,
+                  attribute dependency-plugin { text }?,
+                  mavenRepo*
+              }
+
+mavenRepo = element repo {
+                xsd:anyURI
+            }
+
+configuration = element (* - (maven-config)) {
+                    attribute xml:id { xsd:ID },
+                    attribute exec { text }?,
+                    attribute extends { xsd:IDREF }?,
+                    attribute class { text }?,
+                    attribute argsep { text }?,
+                    (maven|javaOption|systemProperty|classpath|envar|arg|param)*
+                }
+
+maven = element maven {
+            attribute artifact { text },
+            maven*
+        }
+
+javaOption = element java-option {
+                 attribute name { text },
+                 empty
+             }
+
+systemProperty = element system-property {
+                     attribute name { text },
+                     attribute value { text },
+                     empty
+                 }
+
+classpath = element classpath {
+                attribute path { text },
+                empty
+            }
+
+envar = element envar {
+            attribute name { text },
+            attribute value { text },
+            empty
+        }
+
+arg = element arg {
+          attribute name { text },
+          attribute value { text },
+          empty
+      }
+
+param = element param {
+            attribute name { text },
+            attribute value { text },
+            empty
+        }
+
+                    
+    
+    
