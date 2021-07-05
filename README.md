@@ -351,7 +351,7 @@ done.)
 * `debug` is a boolean that determines whether or not to run in debug mode.
 * `nogo` is a boolean that determines whether or not to actually run the application.
 * `java_options` is a list of Java options.
-* `system-properties` is a dictionary of system property name/value pairs.
+* `system_properties` is a dictionary of system property name/value pairs.
 * `envar` is a dictionary of environment variable name/value pairs.
 * `options` is a dictionary of option name/value pairs.
 * `parameters` is a dictonary of parameter name/value pairs.
