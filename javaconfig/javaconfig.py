@@ -180,7 +180,7 @@ class JavaConfig:
         self.verbose = False
         self.debug = False
         self.nogo = False
-        self.java_options = {}
+        self.java_options = []
         self.system_properties = {}
         self.envar = {}
         self.options = {}
