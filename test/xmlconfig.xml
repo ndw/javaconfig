@@ -27,7 +27,8 @@
   <trang xml:id="trang" extends="java"
          class="com.thaiopensource.relaxng.translate.Driver">
     <maven artifact="org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT"/>
-    <maven artifact="org.relaxng:trang:20181222"/>
+    <maven artifact="org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT" classifier="data"/>
+    <maven groupId="org.relaxng" artifactId="trang" version="20181222"/>
     <maven artifact="org.docbook:docbook-xslTNG:1.5.2"/>
     <maven artifact="org.docbook:schemas-docbook:5.2b10a4"/>
   </trang>

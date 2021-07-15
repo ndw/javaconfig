@@ -24,10 +24,12 @@ class TestTrang:
 
     def test_maven(self, trang_config):
         maven = trang_config.get_property("maven")
-        assert maven[0] == "org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT"
-        assert maven[1] == "org.relaxng:trang:20181222"
-        assert maven[2] == "org.docbook:docbook-xslTNG:1.5.2"
-        assert maven[3] == "org.docbook:schemas-docbook:5.2b10a4"
+        assert(len(maven) == 5)
+        assert maven[0] == "org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT:"
+        assert maven[1] == "org.xmlresolver:xmlresolver:3.0.1-SNAPSHOT:data"
+        assert maven[2] == "org.relaxng:trang:20181222:"
+        assert maven[3] == "org.docbook:docbook-xslTNG:1.5.2:"
+        assert maven[4] == "org.docbook:schemas-docbook:5.2b10a4:"
 
     def test_cp(self, trang_config):
         assert type(trang_config.get_property("classpath")) is list
