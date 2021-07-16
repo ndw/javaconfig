@@ -363,3 +363,35 @@ done.)
 Calling `run()` runs the command. Or does everything except run it if
 `nogo` is true. If `debug` is true, this will print out the
 environment as parsed and the command line that (would) run.
+
+# Changelog
+
+## Version 0.0.2
+
+The main thrust of this update is to add support for downloading
+additional jar files from Maven. The XML Resolver project distributes
+both a code jar and a “data” jar. I wanted to be able to specify the
+data jar so that it would be added to the classpath.
+
+In Maven lingo, the difference between the code jar and the data jar
+is that the latter has a “classifier” value of “data”.
+
+* Updated the maven dependency plugin to version 3.2.0. The previous
+  version didn’t seem to support classifiers.
+* Reworked how artifacts are parsed so that the classifier can be
+  specified:
+
+```
+  <maven artifact="org.xmlresolver:xmlresolver:3.0.1" classifier="data"/>
+```
+
+* Made the `verbose` option print out a few more diagnostics about
+  downloading from Maven.
+* Fixed a bug where POM files that had already been downloaded (and hence had
+  a `file:` URI) weren’t being parsed.
+* Fixed a bug where the classpath could have duplicate jars. I don’t think
+  duplicate jars do any harm, but they don’t do any help either!
+
+## Version 0.0.1
+
+Initial release. It’s all new!

@@ -23,7 +23,7 @@ class JavaConfigurations:
 
     def __init__(self, config=None):
         self.repositories = []
-        self.maven_plugin = "org.apache.maven.plugins:maven-dependency-plugin:2.1:get"
+        self.maven_plugin = "org.apache.maven.plugins:maven-dependency-plugin:3.2.0:get"
         self.mvn = "/usr/local/bin/mvn"
         self._configurations = {}
         self._tag_parser = {
@@ -92,7 +92,32 @@ class JavaConfigurations:
                 print("Unrecognized maven configuration:", child.tag)
 
     def _parse_maven(self, config, node, propname="maven"):
-        config.set_property(propname, node.attrib["artifact"])
+        attrok = True
+        if "artifact" in node.attrib:
+            try:
+                group, artifact, version, classifier = node.attrib["artifact"].split(":")
+            except ValueError:
+                classifier = None
+                group, artifact, version = node.attrib["artifact"].split(":")
+        else:
+            for attr in ["groupId", "artifactId", "version"]:
+                if attr not in node.attrib:
+                    # FIXME: better diagnostic required
+                    print("Invalid maven artifact configuration")
+                    attrok = False
+            if attrok:
+                group = node.attrib["groupId"]
+                artifact = node.attrib["artifactId"]
+                version = node.attrib["version"]
+                classifier = None
+                
+        if attrok and "classifier" in node.attrib:
+            classifier = node.attrib["classifier"]
+
+        if classifier is None:
+            classifier = ""
+
+        config.set_property(propname, f"{group}:{artifact}:{version}:{classifier}")
 
     def _parse_java_option(self, config, node, propname="java-option"):
         config.set_property(propname, node.attrib["name"])
@@ -290,11 +315,17 @@ class JavaConfig:
             else:
                 print("Check", artifact)
 
-        group, artifact, version = artifact.split(":")
+        try:
+            group, artifact, version, classifier = artifact.split(":")
+        except ValueError:
+            classifier = ""
+            group, artifact, version = artifact.split(":")
 
-        # print("%s / %s / %s" % (group, artifact, version))
+        if classifier == "":
+            jar = "%s-%s.jar" % (artifact, version)
+        else:
+            jar = "%s-%s-%s.jar" % (artifact, version, classifier)
 
-        jar = "%s-%s.jar" % (artifact, version)
         jarloc = "%s/.m2/repository/%s/%s/%s/%s" % (
             os.environ["HOME"],
             group.replace(".", "/"),
@@ -319,12 +350,24 @@ class JavaConfig:
                 artifact,
                 version,
             )
+
+            if self.verbose:
+                print(f"Repo: {check}")
+            
             if check.startswith("file:"):
                 filename = "/%s/%s" % (re.sub("^file:/+", "", check), pom)
+
+                if self.verbose:
+                    print(f"File: {filename}")
+                
                 if os.path.isfile(filename):
                     repo = check
             else:
                 uri = "%s/%s" % (check, pom)
+
+                if self.verbose:
+                    print(f"URI: {uri}")
+
                 resp = requests.head(uri, allow_redirects=True)
                 if resp.status_code == 200:
                     repo = check
@@ -340,15 +383,22 @@ class JavaConfig:
             print("Cannot find", pom)
             return
 
-        resp = subprocess.run(
-            [
-                self._configurations.mvn,
-                self._configurations.maven_plugin,
-                "-DrepoUrl=%s" % repo,
-                "-Dartifact=%s:%s:%s" % (group, artifact, version),
-            ],
-            capture_output=False, check=False
-        )
+
+        mvn_args = [self._configurations.mvn,
+                    self._configurations.maven_plugin,
+                    "-DrepoUrl=%s" % repo,
+                    "-DgroupId=%s" % group,
+                    "-DartifactId=%s" % artifact,
+                    "-Dversion=%s" % version]
+        if classifier != "":
+            mvn_args.append("-Dclassifier=%s" % classifier)
+            
+        if self.verbose:
+            print("Run: ".join(mvn_args))
+
+        resp = subprocess.run(mvn_args,
+                              capture_output=False, check=False
+                              )
 
         if resp.returncode != 0:
             print("Maven dependency download failed?")
@@ -357,12 +407,25 @@ class JavaConfig:
             print("Failed to download %s:%s:%s" % (group, artifact, version))
             return
 
-        resp = requests.get("%s/%s" % (repo, pom))
-        if resp.status_code != 200:
-            print("Cannot download POM: %s/%s" % (repo, pom))
-            return
 
-        tree = ET.fromstring(resp.text)
+        pom_file = "%s/%s" % (repo, pom);
+        if pom_file.startswith("file:/"):
+            pom_file = pom_file[6:]
+            try:
+                with open(pom_file) as pom_data:
+                    resp = "\n".join(pom_data.readlines());
+            except FileNotFoundError:
+                print("Cannot read POM: %s/%s" % (repo, pom))
+                return
+        else:
+            resp = requests.get(pom_file);
+            if resp.status_code == 200:
+                resp = resp.text
+            else:
+                print("Cannot download POM: %s/%s" % (repo, pom))
+                return
+
+        tree = ET.fromstring(resp)
         dependencies = tree.find("{http://maven.apache.org/POM/4.0.0}dependencies")
         if dependencies:
             for dependency in dependencies.findall("{http://maven.apache.org/POM/4.0.0}dependency"):
@@ -505,7 +568,11 @@ class JavaConfig:
 
         classpath = []
         if self.get_property("classpath") or self.get_property("jars"):
-            classpath = self.get_property("classpath") + self.get_property("jars")
+            cpset = set()
+            for path in self.get_property("classpath") + self.get_property("jars"):
+                if path not in cpset:
+                    classpath.append(path);
+                    cpset.add(path);
 
         process = self.get_property("exec")
         classname = self.get_property("class")
