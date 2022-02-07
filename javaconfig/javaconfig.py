@@ -458,7 +458,7 @@ class JavaConfig:
                 if ":" not in name or name.index("=") < name.index(":"):
                     sep = "="
 
-        if sep in name:
+        if sep and sep in name:
             pos = name.index(sep)
             value = name[pos + 1 :]
             name = name[0:pos]
