@@ -394,7 +394,7 @@ class JavaConfig:
             mvn_args.append("-Dclassifier=%s" % classifier)
 
         if self.verbose:
-            print("Run: ".join(mvn_args))
+            print("Run: ", " ".join(mvn_args))
 
         resp = subprocess.run(mvn_args,
                               capture_output=False, check=False
