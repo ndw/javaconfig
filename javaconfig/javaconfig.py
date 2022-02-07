@@ -110,7 +110,7 @@ class JavaConfigurations:
                 artifact = node.attrib["artifactId"]
                 version = node.attrib["version"]
                 classifier = None
-                
+
         if attrok and "classifier" in node.attrib:
             classifier = node.attrib["classifier"]
 
@@ -353,13 +353,13 @@ class JavaConfig:
 
             if self.verbose:
                 print(f"Repo: {check}")
-            
+
             if check.startswith("file:"):
                 filename = "/%s/%s" % (re.sub("^file:/+", "", check), pom)
 
                 if self.verbose:
                     print(f"File: {filename}")
-                
+
                 if os.path.isfile(filename):
                     repo = check
             else:
@@ -392,7 +392,7 @@ class JavaConfig:
                     "-Dversion=%s" % version]
         if classifier != "":
             mvn_args.append("-Dclassifier=%s" % classifier)
-            
+
         if self.verbose:
             print("Run: ".join(mvn_args))
 
