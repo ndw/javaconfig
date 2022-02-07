@@ -386,7 +386,7 @@ class JavaConfig:
 
         mvn_args = [self._configurations.mvn,
                     self._configurations.maven_plugin,
-                    "-DrepoUrl=%s" % repo,
+                    "-DremoteRepositories=%s" % repo,
                     "-DgroupId=%s" % group,
                     "-DartifactId=%s" % artifact,
                     "-Dversion=%s" % version]
