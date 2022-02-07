@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='javaconfig',
-      version='0.0.2',
+      version='0.0.4',
       description='',
       url='https://github.com/ndw/javaconfig',
       author='Norman Walsh',
